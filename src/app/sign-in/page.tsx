@@ -1,30 +1,94 @@
 
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
 
     if (!email || !password) {
       setError("ইমেইল এবং পাসওয়ার্ড লিখুন।");
       return;
     }
 
-    // এখানে তোমার authentication API যুক্ত করবে।
-    setSuccess("ফর্মটি সঠিকভাবে পূরণ করা হয়েছে।");
+    setLoading(true);
+
+    try {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setError(
+          error.message || "ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।"
+        );
+        return;
+      }
+
+      setSuccess("সফলভাবে লগ ইন হয়েছে।");
+
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError(
+        "সার্ভারের সঙ্গে সংযোগ করা যায়নি। আবার চেষ্টা করুন।"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSocialLogin = async (
+    provider: "google" | "github"
+  ) => {
+    setError("");
+    setSuccess("");
+    setSocialLoading(provider);
+
+    try {
+      const { error } = await authClient.signIn.social({
+        provider,
+        callbackURL: "/",
+      });
+
+      // OAuth normally redirects the browser.
+      // Show an error only if the request fails.
+      if (error) {
+        setError(
+          error.message || "সোশ্যাল লগ ইন করা যায়নি। আবার চেষ্টা করুন।"
+        );
+        setSocialLoading("");
+      }
+    } catch {
+      setError(
+        "সোশ্যাল লগ ইন করা যায়নি। আবার চেষ্টা করুন।"
+      );
+      setSocialLoading("");
+    }
+  };
+
+  const isBusy = loading || socialLoading !== "";
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f0f5f1] px-4 py-8 sm:px-6">
@@ -36,7 +100,7 @@ export default function LoginPage() {
           </h1>
 
           <p className="mt-2 text-xs leading-5 text-gray-500 sm:text-sm">
-            বিস্তারিত নয়, আবার শুনুন ও এগিয়ে যান (আপনার অ্যাকাউন্টে ঢুকুন)
+            আবার ফিরে আসুন এবং আপনার অ্যাকাউন্টে প্রবেশ করুন।
           </p>
         </div>
 
@@ -58,8 +122,10 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@example.com"
                 autoComplete="email"
+                maxLength={254}
                 required
-                className="w-full rounded-lg border border-[#dfe7e0] bg-[#fbfdfb] px-3 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                disabled={isBusy}
+                className="w-full rounded-lg border border-[#dfe7e0] bg-[#fbfdfb] px-3 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -78,20 +144,31 @@ export default function LoginPage() {
                 type="password"
                 placeholder="পাসওয়ার্ড লিখুন"
                 autoComplete="current-password"
+                maxLength={128}
                 required
-                className="w-full rounded-lg border border-[#dfe7e0] bg-[#fbfdfb] px-3 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                disabled={isBusy}
+                className="w-full rounded-lg border border-[#dfe7e0] bg-[#fbfdfb] px-3 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
-            {/* Feedback */}
+            {/* Error Message */}
             {error && (
-              <p role="alert" className="text-sm text-red-600">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600"
+              >
                 {error}
               </p>
             )}
 
+            {/* Success Message */}
             {success && (
-              <p role="status" className="text-sm text-green-700">
+              <p
+                role="status"
+                aria-live="polite"
+                className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"
+              >
                 {success}
               </p>
             )}
@@ -99,9 +176,17 @@ export default function LoginPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#078b43] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#067537] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.99]"
+              disabled={isBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#078b43] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#067537] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              সাইন ইন
+              {loading && (
+                <span
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  aria-hidden="true"
+                />
+              )}
+
+              {loading ? "লগ ইন হচ্ছে..." : "সাইন ইন"}
             </button>
           </form>
 
@@ -114,12 +199,18 @@ export default function LoginPage() {
 
           {/* Social Login */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Google */}
             <button
               type="button"
-              onClick={() => alert("Google authentication সেটআপ করতে হবে।")}
-              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#dfe7e0] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              disabled={isBusy}
+              onClick={() => handleSocialLogin("google")}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#dfe7e0] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+              <svg
+                viewBox="0 0 48 48"
+                className="h-5 w-5 shrink-0"
+                aria-hidden="true"
+              >
                 <path
                   fill="#EA4335"
                   d="M24 9.5c3.5 0 6.3 1.2 8.5 3.2l6.3-6.3C35 2.5 29.9 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.4 5.7C11.8 13.1 17.4 9.5 24 9.5Z"
@@ -137,23 +228,31 @@ export default function LoginPage() {
                   d="M24 48c6.5 0 12-2.1 16-6.4l-7.3-5.7c-2 1.4-4.7 2.3-8.7 2.3-6.6 0-12.2-3.6-14-9.4l-7.4 5.7C6.5 42.6 14.6 48 24 48Z"
                 />
               </svg>
-              Google দিয়ে চালিয়ে যান
+
+              {socialLoading === "google"
+                ? "Google-এ যাচ্ছেন..."
+                : "Google দিয়ে চালিয়ে যান"}
             </button>
 
+            {/* GitHub */}
             <button
               type="button"
-              onClick={() => alert("GitHub authentication সেটআপ করতে হবে।")}
-              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#dfe7e0] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              disabled={isBusy}
+              onClick={() => handleSocialLogin("github")}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#dfe7e0] px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <svg
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="h-5 w-5"
+                className="h-5 w-5 shrink-0"
                 aria-hidden="true"
               >
                 <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.54v-2.1c-3.1.68-3.76-1.31-3.76-1.31-.5-1.29-1.24-1.63-1.24-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.59 1.21 3.22.92.1-.72.39-1.21.7-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.29-2.61 5.24-5.1 5.51.4.35.75 1.03.75 2.08v3.07c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z" />
               </svg>
-              GitHub দিয়ে চালিয়ে যান
+
+              {socialLoading === "github"
+                ? "GitHub-এ যাচ্ছেন..."
+                : "GitHub দিয়ে চালিয়ে যান"}
             </button>
           </div>
 
@@ -172,7 +271,10 @@ export default function LoginPage() {
         {/* Back to Home */}
         <p className="mt-6 text-center text-xs text-gray-400">
           ←{" "}
-          <Link href="/" className="transition hover:text-green-700">
+          <Link
+            href="/"
+            className="transition hover:text-green-700"
+          >
             সাইটে ফিরে যান
           </Link>
         </p>

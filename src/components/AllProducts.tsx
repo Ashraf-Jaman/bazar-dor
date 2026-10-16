@@ -1,9 +1,11 @@
 
 import { fetchProducts } from "@/lib/products";
+import Link from "next/link";
 
 type Product = {
   id: number;
   nameBn: string;
+  category: string;
   categoryNameBn: string;
   categoryIcon?: string;
   image?: string;
@@ -11,7 +13,7 @@ type Product = {
   today: number;
   yesterday: number;
   change: {
-    dir: "up" | "down" | "same";
+    dir: "up" | "down" | "same" | "flat";
     pct: number;
   };
 };
@@ -22,19 +24,33 @@ const formatPrice = (price: number) =>
   }).format(price);
 
 const AllProducts = async () => {
-  const products: Product[] = await fetchProducts();
+  let products: Product[];
+
+  try {
+    products = await fetchProducts();
+  } catch (error) {
+    console.error("Failed to load all products:", error);
+
+    return (
+      <section className="w-full bg-[#f0f5f0] px-4 py-7 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-[1100px] rounded-xl border border-[#e1e8e1] bg-white p-6 text-center text-sm text-red-600">
+          পণ্যের তথ্য লোড করা যায়নি। পরে আবার চেষ্টা করো।
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full bg-[#f0f5f0] px-4 py-7 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-[1100px]">
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <span>🛒</span>
           <h2 className="text-base font-bold text-[#202820] sm:text-lg">
             সব পণ্য
           </h2>
-          <h6 className=" px-2.5 py-1 text-xs font-semibold text-[#687168]">
-            মোট {formatPrice(products.length)}টি পণ্য দেখানো হচ্ছে
-          </h6>
+          <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#687168]">
+            মোট {formatPrice(products.length)}টি পণ্য
+          </span>
         </div>
 
         {products.length > 0 ? (
@@ -44,17 +60,18 @@ const AllProducts = async () => {
               const isDown = product.change?.dir === "down";
 
               return (
-                <article
+                <Link
                   key={product.id}
-                  className="rounded-xl border border-[#e1e8e1] bg-[#fbfdfb] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm sm:p-5"
+                  href={`/products/${product.id}`}
+                  className="group rounded-xl border border-[#e1e8e1] bg-[#fbfdfb] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd9cb] hover:shadow-sm sm:p-5"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#f0f4ef] text-2xl">
                       {product.image || product.categoryIcon || "🛒"}
                     </div>
 
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-bold leading-6 text-[#263027] sm:text-base">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-bold leading-6 text-[#263027] group-hover:text-green-800 sm:text-base">
                         {product.nameBn}
                       </h3>
                       <p className="text-xs leading-5 text-[#7b847b] sm:text-sm">
@@ -70,6 +87,9 @@ const AllProducts = async () => {
                       </p>
                       <p className="text-base font-bold leading-6 text-[#202820] sm:text-lg">
                         {formatPrice(product.today)} টাকা
+                        <span className="ml-1 text-xs font-medium text-[#687168]">
+                          /{product.unit}
+                        </span>
                       </p>
                     </div>
 
@@ -88,13 +108,13 @@ const AllProducts = async () => {
                       {formatPrice(product.change?.pct ?? 0)}%
                     </span>
                   </div>
-                </article>
+                </Link>
               );
             })}
           </div>
         ) : (
           <div className="rounded-xl border border-[#e1e8e1] bg-[#fbfdfb] px-4 py-8 text-center text-sm text-[#687168]">
-            কোনো পণ্য পাওয়া যায়নি।
+            কোনো পণ্য পাওয়া যায়নি।
           </div>
         )}
       </div>
