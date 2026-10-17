@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchProducts } from "@/lib/products";
+import type { Product } from "@/lib/products";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ export default async function ProductDetailsPage({
 }: PageProps) {
   const { id } = await params;
 
-  let products;
+  let products: Product[];
 
   try {
     products = await fetchProducts();
@@ -26,10 +27,15 @@ export default async function ProductDetailsPage({
           <h1 className="font-bold text-[#26332c]">
             পণ্যের তথ্য লোড করা যায়নি
           </h1>
+
           <p className="mt-2 text-sm text-gray-500">
             কিছুক্ষণ পর আবার চেষ্টা করো।
           </p>
-          <Link href="/" className="mt-4 inline-block text-sm font-semibold underline">
+
+          <Link
+            href="/"
+            className="mt-4 inline-block text-sm font-semibold underline"
+          >
             হোম পেজে ফিরে যাও
           </Link>
         </div>
@@ -38,12 +44,15 @@ export default async function ProductDetailsPage({
   }
 
   const product = products.find(
-    (item) => String(item.id) === id
+    (item: Product) => String(item.id) === id
   );
 
-  if (!product) notFound();
+  if (!product) {
+    notFound();
+  }
 
   const changeDirection = product.change?.dir;
+
   const changeColor =
     changeDirection === "up"
       ? "text-red-600"
@@ -82,25 +91,27 @@ export default async function ProductDetailsPage({
   return (
     <main className="min-h-screen bg-[#f0f5f0] px-4 py-5 text-[#26332c] sm:px-6 sm:py-7">
       <div className="mx-auto max-w-5xl">
-        {/* Breadcrumb */}
         <nav className="mb-4 flex flex-wrap items-center gap-2 text-xs text-[#78847b]">
           <Link href="/" className="transition hover:text-green-800">
             হোম
           </Link>
+
           <span>/</span>
+
           <Link
             href={`/categories/${product.category}`}
             className="transition hover:text-green-800"
           >
             {product.categoryNameBn}
           </Link>
+
           <span>/</span>
+
           <span className="font-medium text-[#344239]">
             {product.nameBn}
           </span>
         </nav>
 
-        {/* Product heading */}
         <section className="flex flex-col gap-4 rounded-xl border border-[#e4ebe4] bg-white/90 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0f5ef] text-2xl">
@@ -111,27 +122,30 @@ export default async function ProductDetailsPage({
               <h1 className="text-lg font-extrabold sm:text-xl">
                 {product.nameBn}
               </h1>
+
               <p className="mt-1 text-xs text-[#7d887f]">
                 {product.categoryNameBn} · বাজারদর ও মূল্য পরিবর্তন
               </p>
+
               <p className="mt-1 text-xs text-[#657168]">
                 একক: {product.unit}
               </p>
             </div>
           </div>
 
-          {/* Current price */}
           <div className="flex shrink-0 items-center justify-between gap-6 rounded-xl bg-[#f3f7f2] px-4 py-3 sm:min-w-[145px] sm:flex-col sm:items-end sm:gap-1">
             <div>
               <p className="text-[11px] text-[#7c887e]">
                 আজকের বাজারদর
               </p>
+
               <p className="mt-1 text-2xl font-extrabold">
                 {money(product.today)}
                 <span className="ml-1 text-xs font-medium">
                   টাকা
                 </span>
               </p>
+
               <p className="text-[11px] text-[#7c887e]">
                 প্রতি {product.unit}
               </p>
@@ -143,7 +157,6 @@ export default async function ProductDetailsPage({
           </div>
         </section>
 
-        {/* Price comparison */}
         <section className="mt-4 rounded-xl border border-[#e4ebe4] bg-white/90 p-4 sm:p-5">
           <h2 className="text-sm font-bold">
             দামের তুলনামূলক চিত্র
@@ -158,9 +171,11 @@ export default async function ProductDetailsPage({
                 <p className="text-[11px] text-[#7d887f]">
                   {item.label}
                 </p>
+
                 <p className={`mt-2 text-base font-extrabold ${item.color}`}>
                   {item.icon} {money(item.price)} টাকা
                 </p>
+
                 <p className="mt-1 text-[10px] text-[#8a948c]">
                   প্রতি {product.unit}
                 </p>
@@ -168,7 +183,6 @@ export default async function ProductDetailsPage({
             ))}
           </div>
 
-          {/* Market table */}
           <div className="mt-5">
             <h2 className="text-sm font-bold">
               বাজারভিত্তিক বর্তমান দাম
@@ -199,12 +213,15 @@ export default async function ProductDetailsPage({
                         <td className="px-4 py-3 font-medium">
                           {market.market}
                         </td>
+
                         <td className="px-4 py-3 text-[#68756b]">
                           {market.division}
                         </td>
+
                         <td className="px-4 py-3 text-right font-semibold">
                           {money(market.min)} টাকা
                         </td>
+
                         <td className="px-4 py-3 text-right font-semibold">
                           {money(market.max)} টাকা
                         </td>

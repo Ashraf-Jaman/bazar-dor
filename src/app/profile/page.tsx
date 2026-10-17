@@ -4,7 +4,7 @@
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -51,7 +51,9 @@ export default function ProfilePage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "প্রোফাইল আপডেট করা যায়নি।");
+        setError(
+          result.error.message || "প্রোফাইল আপডেট করা যায়নি।"
+        );
         return;
       }
 
@@ -63,10 +65,12 @@ export default function ProfilePage() {
     }
   };
 
-  if (isPending || !session) {
+  if (isPending || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#eff5ef]">
-        <p className="text-sm text-gray-500">প্রোফাইল লোড হচ্ছে...</p>
+        <p className="text-sm text-gray-500">
+          প্রোফাইল লোড হচ্ছে...
+        </p>
       </main>
     );
   }
@@ -74,7 +78,6 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen bg-[#eff5ef] px-4 py-10 sm:py-14">
       <div className="mx-auto max-w-md">
-        {/* Page heading */}
         <div className="mb-5">
           <h1 className="text-xl font-extrabold text-[#26352b]">
             আমার প্রোফাইল
@@ -84,7 +87,6 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* User information card */}
         <section className="mb-4 rounded-xl border border-[#e3ebe3] bg-[#fbfdfb] p-4 shadow-sm">
           <div className="flex items-center gap-3">
             {user.image ? (
@@ -122,7 +124,6 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Update profile form */}
         <section className="rounded-xl border border-[#e3ebe3] bg-[#fbfdfb] p-4 shadow-sm sm:p-5">
           <h2 className="mb-5 text-sm font-bold text-[#26352b]">
             তথ্য
