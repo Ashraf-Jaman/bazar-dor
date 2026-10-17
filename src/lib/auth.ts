@@ -15,7 +15,7 @@ const client = new MongoClient(mongoUrl);
 const db = client.db("bazar-dor");
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000", "https://bazar-dor-five-theta.vercel.app",
 
   secret: process.env.BETTER_AUTH_SECRET,
 
