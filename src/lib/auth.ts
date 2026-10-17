@@ -7,7 +7,7 @@ const mongoUrl = process.env.MONGODB_AUTH_URL;
 
 if (!mongoUrl) {
   throw new Error(
-    "MONGODB_AUTH_URL is missing. Please configure it in .env.local"
+    "MONGODB_AUTH_URL is missing. Check your root .env file."
   );
 }
 
@@ -15,8 +15,7 @@ const client = new MongoClient(mongoUrl);
 const db = client.db("bazar-dor");
 
 export const auth = betterAuth({
-  baseURL:
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 
   secret: process.env.BETTER_AUTH_SECRET,
 
