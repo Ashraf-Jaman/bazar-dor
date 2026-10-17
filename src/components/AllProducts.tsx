@@ -1,29 +1,14 @@
 
 import { fetchProducts } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import Link from "next/link";
-
-type Product = {
-  id: number;
-  nameBn: string;
-  category: string;
-  categoryNameBn: string;
-  categoryIcon?: string;
-  image?: string;
-  unit: string;
-  today: number;
-  yesterday: number;
-  change: {
-    dir: "up" | "down" | "same" | "flat";
-    pct: number;
-  };
-};
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("bn-BD", {
     maximumFractionDigits: 2,
   }).format(price);
 
-const AllProducts = async () => {
+export default async function AllProducts() {
   let products: Product[];
 
   try {
@@ -120,6 +105,4 @@ const AllProducts = async () => {
       </div>
     </section>
   );
-};
-
-export default AllProducts;
+}

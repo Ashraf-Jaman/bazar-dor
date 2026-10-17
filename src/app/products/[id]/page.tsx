@@ -1,4 +1,5 @@
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchProducts } from "@/lib/products";
@@ -11,9 +12,19 @@ type PageProps = {
 const money = (value: number) =>
   new Intl.NumberFormat("bn-BD").format(value);
 
-export default async function ProductDetailsPage({
-  params,
-}: PageProps) {
+function ProductLoading() {
+  return (
+    <main className="min-h-screen bg-[#f0f5f0] px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-5xl animate-pulse">
+        <div className="h-4 w-48 rounded bg-gray-200" />
+        <div className="mt-5 h-32 rounded-xl bg-white" />
+        <div className="mt-4 h-56 rounded-xl bg-white" />
+      </div>
+    </main>
+  );
+}
+
+async function ProductDetailsContent({ params }: PageProps) {
   const { id } = await params;
 
   let products: Product[];
@@ -27,11 +38,9 @@ export default async function ProductDetailsPage({
           <h1 className="font-bold text-[#26332c]">
             পণ্যের তথ্য লোড করা যায়নি
           </h1>
-
           <p className="mt-2 text-sm text-gray-500">
             কিছুক্ষণ পর আবার চেষ্টা করো।
           </p>
-
           <Link
             href="/"
             className="mt-4 inline-block text-sm font-semibold underline"
@@ -44,12 +53,10 @@ export default async function ProductDetailsPage({
   }
 
   const product = products.find(
-    (item: Product) => String(item.id) === id
+    (item) => String(item.id) === id
   );
 
-  if (!product) {
-    notFound();
-  }
+  if (!product) notFound();
 
   const changeDirection = product.change?.dir;
 
@@ -95,18 +102,14 @@ export default async function ProductDetailsPage({
           <Link href="/" className="transition hover:text-green-800">
             হোম
           </Link>
-
           <span>/</span>
-
           <Link
             href={`/categories/${product.category}`}
             className="transition hover:text-green-800"
           >
             {product.categoryNameBn}
           </Link>
-
           <span>/</span>
-
           <span className="font-medium text-[#344239]">
             {product.nameBn}
           </span>
@@ -122,11 +125,9 @@ export default async function ProductDetailsPage({
               <h1 className="text-lg font-extrabold sm:text-xl">
                 {product.nameBn}
               </h1>
-
               <p className="mt-1 text-xs text-[#7d887f]">
                 {product.categoryNameBn} · বাজারদর ও মূল্য পরিবর্তন
               </p>
-
               <p className="mt-1 text-xs text-[#657168]">
                 একক: {product.unit}
               </p>
@@ -138,19 +139,14 @@ export default async function ProductDetailsPage({
               <p className="text-[11px] text-[#7c887e]">
                 আজকের বাজারদর
               </p>
-
               <p className="mt-1 text-2xl font-extrabold">
                 {money(product.today)}
-                <span className="ml-1 text-xs font-medium">
-                  টাকা
-                </span>
+                <span className="ml-1 text-xs font-medium">টাকা</span>
               </p>
-
               <p className="text-[11px] text-[#7c887e]">
                 প্রতি {product.unit}
               </p>
             </div>
-
             <span className={`text-xs font-bold ${changeColor}`}>
               {changeIcon} {money(product.change?.pct ?? 0)}%
             </span>
@@ -158,9 +154,7 @@ export default async function ProductDetailsPage({
         </section>
 
         <section className="mt-4 rounded-xl border border-[#e4ebe4] bg-white/90 p-4 sm:p-5">
-          <h2 className="text-sm font-bold">
-            দামের তুলনামূলক চিত্র
-          </h2>
+          <h2 className="text-sm font-bold">দামের তুলনামূলক চিত্র</h2>
 
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {priceComparisons.map((item) => (
@@ -171,11 +165,9 @@ export default async function ProductDetailsPage({
                 <p className="text-[11px] text-[#7d887f]">
                   {item.label}
                 </p>
-
                 <p className={`mt-2 text-base font-extrabold ${item.color}`}>
                   {item.icon} {money(item.price)} টাকা
                 </p>
-
                 <p className="mt-1 text-[10px] text-[#8a948c]">
                   প্রতি {product.unit}
                 </p>
@@ -203,7 +195,6 @@ export default async function ProductDetailsPage({
                       </th>
                     </tr>
                   </thead>
-
                   <tbody>
                     {product.markets.map((market, index) => (
                       <tr
@@ -213,15 +204,12 @@ export default async function ProductDetailsPage({
                         <td className="px-4 py-3 font-medium">
                           {market.market}
                         </td>
-
                         <td className="px-4 py-3 text-[#68756b]">
                           {market.division}
                         </td>
-
                         <td className="px-4 py-3 text-right font-semibold">
                           {money(market.min)} টাকা
                         </td>
-
                         <td className="px-4 py-3 text-right font-semibold">
                           {money(market.max)} টাকা
                         </td>
@@ -239,5 +227,13 @@ export default async function ProductDetailsPage({
         </section>
       </div>
     </main>
+  );
+}
+
+export default function ProductDetailsPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<ProductLoading />}>
+      <ProductDetailsContent params={params} />
+    </Suspense>
   );
 }

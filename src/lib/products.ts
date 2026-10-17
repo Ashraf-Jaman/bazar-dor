@@ -19,7 +19,7 @@ export type Product = {
   lastWeek: number;
   lastMonth: number;
   change?: {
-    dir?: "up" | "down" | "same";
+    dir?: "flat" | "up" | "down" | "same";
     pct: number;
   };
   markets?: Market[];
@@ -46,10 +46,7 @@ export async function fetchProducts(): Promise<Product[]> {
   } else if (typeof result === "object" && result !== null) {
     if ("data" in result && Array.isArray(result.data)) {
       items = result.data;
-    } else if (
-      "products" in result &&
-      Array.isArray(result.products)
-    ) {
+    } else if ("products" in result && Array.isArray(result.products)) {
       items = result.products;
     }
   }

@@ -1,33 +1,18 @@
 
 import { fetchProducts } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import Link from "next/link";
-
-type Product = {
-  id: string | number;
-  nameBn: string;
-  category: string;
-  categoryNameBn: string;
-  categoryIcon?: string;
-  image?: string;
-  unit: string;
-  today: number;
-  yesterday: number;
-  change: {
-    dir: "up" | "down" | "same" | "flat";
-    pct: number;
-  };
-};
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("bn-BD", {
     maximumFractionDigits: 2,
   }).format(price);
 
-const PriceUp = async () => {
-  let priceUpData: Product[] = [];
+export default async function PriceUp() {
+  let priceUpData: Product[];
 
   try {
-    const products: Product[] = await fetchProducts();
+    const products = await fetchProducts();
 
     priceUpData = products.filter(
       (product) => product.change?.dir === "up"
@@ -49,7 +34,6 @@ const PriceUp = async () => {
   return (
     <section className="w-full bg-[#f0f5f0] px-4 py-7 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-[1100px]">
-        {/* Section heading */}
         <div className="mb-4 flex items-center gap-2">
           <span className="text-xs text-red-500">▲</span>
           <h2 className="text-base font-bold tracking-tight text-[#202820] sm:text-lg">
@@ -57,7 +41,6 @@ const PriceUp = async () => {
           </h2>
         </div>
 
-        {/* Empty state */}
         {priceUpData.length === 0 ? (
           <div className="rounded-xl border border-[#e1e8e1] bg-[#fbfdfb] px-4 py-8 text-center">
             <p className="text-sm font-semibold text-[#263027]">
@@ -68,7 +51,6 @@ const PriceUp = async () => {
             </p>
           </div>
         ) : (
-          /* Product cards */
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {priceUpData.map((product) => (
               <Link
@@ -85,7 +67,6 @@ const PriceUp = async () => {
                     <h3 className="truncate text-sm font-bold leading-6 text-[#263027] group-hover:text-green-800 sm:text-base">
                       {product.nameBn}
                     </h3>
-
                     <p className="text-xs leading-5 text-[#7b847b] sm:text-sm">
                       {product.categoryNameBn || "অন্যান্য"}
                     </p>
@@ -97,7 +78,6 @@ const PriceUp = async () => {
                     <p className="mb-1 text-[11px] text-[#687168] sm:text-xs">
                       আজকের দাম
                     </p>
-
                     <p className="text-base font-bold leading-6 text-[#202820] sm:text-lg">
                       {formatPrice(product.today)} টাকা
                       <span className="ml-1 text-xs font-medium text-[#687168]">
@@ -118,6 +98,4 @@ const PriceUp = async () => {
       </div>
     </section>
   );
-};
-
-export default PriceUp;
+}
