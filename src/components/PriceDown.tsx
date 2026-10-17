@@ -3,7 +3,7 @@ import { fetchProducts } from "@/lib/products";
 import Link from "next/link";
 
 type Product = {
-  id: number;
+  id: string | number;
   nameBn: string;
   category: string;
   categoryNameBn: string;
